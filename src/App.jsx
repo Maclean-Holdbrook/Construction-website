@@ -208,11 +208,12 @@ export default function App() {
       return []
     }
   })
+  const safeProducts = useMemo(() => (Array.isArray(products) ? products : []), [products])
 
-  const categories = useMemo(() => ['All', ...new Set(products.map((product) => product.category))], [products])
-  const featuredProducts = useMemo(() => products.slice(0, 3), [products])
+  const categories = useMemo(() => ['All', ...new Set(safeProducts.map((product) => product.category))], [safeProducts])
+  const featuredProducts = useMemo(() => safeProducts.slice(0, 3), [safeProducts])
   const filteredProducts = useMemo(() => {
-    const visibleProducts = products.filter(
+    const visibleProducts = safeProducts.filter(
       (product) =>
         (activeCategory === 'All' || product.category === activeCategory) &&
         (!searchTerm.trim() ||
@@ -241,7 +242,7 @@ export default function App() {
     }
 
     return sortedProducts
-  }, [activeCategory, products, searchTerm, sortOption])
+  }, [activeCategory, safeProducts, searchTerm, sortOption])
   const cartItemCount = useMemo(() => cart.reduce((total, item) => total + item.quantity, 0), [cart])
   const cartSubtotal = useMemo(
     () => cart.reduce((total, item) => total + item.price * item.quantity, 0),
@@ -382,7 +383,7 @@ export default function App() {
         const data = await parseJson(await apiFetch('/api/products'))
 
         if (!ignore) {
-          setProducts(data.products)
+          setProducts(Array.isArray(data.products) ? data.products : fallbackProducts)
           setCatalogNotice('')
         }
       } catch {
@@ -490,7 +491,7 @@ export default function App() {
     try {
       setIsLoadingProducts(true)
       const data = await parseJson(await apiFetch('/api/products'))
-      setProducts(data.products)
+      setProducts(Array.isArray(data.products) ? data.products : fallbackProducts)
       setCatalogNotice('')
     } catch {
       setProducts(fallbackProducts)
@@ -903,10 +904,10 @@ export default function App() {
       return []
     }
 
-    return products
+    return safeProducts
       .filter((product) => product.category === activeProduct.category && product.id !== activeProduct.id)
       .slice(0, 3)
-  }, [activeProduct, products])
+  }, [activeProduct, safeProducts])
 
   return (
     <div className="min-h-screen bg-[#f2ede3] text-stone-950">

@@ -32,6 +32,7 @@ function getStatusBadgeClasses(status) {
 }
 
 export default function AdminPage({ openPage, products, onProductsRefresh }) {
+  const safeProducts = Array.isArray(products) ? products : []
   const [adminToken, setAdminToken] = useState(() => localStorage.getItem('adminToken') || '')
   const [adminUsername, setAdminUsername] = useState(() => localStorage.getItem('adminUsername') || '')
   const [credentials, setCredentials] = useState({ username: '', password: '' })
@@ -49,8 +50,8 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
   const [isLoadingOrders, setIsLoadingOrders] = useState(false)
   const [updatingOrderId, setUpdatingOrderId] = useState('')
 
-  const adminCategories = ['All', ...new Set(products.map((product) => product.category))]
-  const visibleProducts = products.filter((product) => {
+  const adminCategories = ['All', ...new Set(safeProducts.map((product) => product.category))]
+  const visibleProducts = safeProducts.filter((product) => {
     const normalizedSearch = productSearch.trim().toLowerCase()
     const matchesSearch =
       !normalizedSearch ||
@@ -70,7 +71,7 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
     return order.orderStatus === orderFilter || order.paymentStatus === orderFilter
   })
   const dashboardStats = {
-    totalProducts: products.length,
+    totalProducts: safeProducts.length,
     visibleProducts: visibleProducts.length,
     totalOrders: orders.length,
     visibleOrders: visibleOrders.length,
@@ -576,7 +577,7 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
 
               <p className="mt-4 text-sm text-stone-600">
                 Showing <span className="font-semibold text-stone-950">{visibleProducts.length}</span> of{' '}
-                <span className="font-semibold text-stone-950">{products.length}</span> products
+                    <span className="font-semibold text-stone-950">{safeProducts.length}</span> products
               </p>
 
               <div className="mt-6 space-y-4">
