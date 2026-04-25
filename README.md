@@ -21,4 +21,11 @@ npm run dev
 
 ## Deploy
 
-Deploy this repo to Vercel as a Vite frontend project.
+Deploy this repo to Vercel as a frontend project with:
+
+- Framework Preset: `Other`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Install Command: `npm install`
+
+Do not add an `api/` proxy in this repo. The frontend should call the backend directly through `VITE_API_BASE_URL`.
