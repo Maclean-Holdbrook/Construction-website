@@ -14,7 +14,7 @@ import OrderStatusPage from './pages/OrderStatusPage'
 import ProductDetailPage from './pages/ProductDetailPage'
 import ProductsPage from './pages/ProductsPage'
 
-const shopHashes = new Set(['', 'home', 'products', 'about', 'contact'])
+const shopHashes = new Set(['', 'home', 'products', 'service', 'about', 'contact'])
 const intendedRouteStorageKey = 'buildmart-intended-route'
 const scrollPositionsStorageKey = 'buildmart-scroll-positions'
 const deliveryFees = {

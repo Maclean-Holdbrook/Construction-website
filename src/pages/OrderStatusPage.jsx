@@ -13,16 +13,12 @@ function getBadgeClasses(status) {
 export default function OrderStatusPage({
   customerAccount,
   isLoadingOrderHistory,
-  isSavingProfile,
   onOpenAuth,
   onOpenCart,
   onOpenPage,
-  onProfileFieldChange,
-  onProfileSubmit,
   onRetryPayment,
   orderHistory,
   paymentStatus,
-  profileForm,
 }) {
   const isSuccess = paymentStatus.state === 'success'
   const isError = paymentStatus.state === 'error'
@@ -56,7 +52,7 @@ export default function OrderStatusPage({
 
   const description = !hasReference
     ? customerAccount
-      ? 'Review your recent orders, update your profile, and continue shopping from here.'
+      ? 'Review your recent orders and continue shopping from here.'
       : 'Log in to review your order history and verify payments linked to your account.'
     : paymentStatus.message || 'We are checking the payment status for your order.'
 
@@ -276,70 +272,6 @@ export default function OrderStatusPage({
           )}
         </div>
 
-        {customerAccount ? (
-          <div className="mt-8 rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-[0_20px_55px_rgba(0,0,0,0.05)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-amber-700">Account Profile</p>
-            <h2 className="mt-3 font-serif text-3xl text-stone-950">Update delivery details</h2>
-            <form className="mt-6 space-y-4" onSubmit={onProfileSubmit}>
-              <input
-                value={profileForm.name}
-                onChange={(event) => onProfileFieldChange('name', event.target.value)}
-                type="text"
-                placeholder="Full name"
-                className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-amber-500"
-              />
-              <input
-                value={customerAccount.email}
-                type="email"
-                readOnly
-                className="w-full rounded-2xl border border-stone-200 bg-stone-100 px-4 py-3 text-sm text-stone-500 outline-none"
-              />
-              <input
-                value={profileForm.phone}
-                onChange={(event) => onProfileFieldChange('phone', event.target.value)}
-                type="tel"
-                placeholder="Phone number"
-                className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-amber-500"
-              />
-              <textarea
-                value={profileForm.address}
-                onChange={(event) => onProfileFieldChange('address', event.target.value)}
-                rows="3"
-                placeholder="Delivery address"
-                className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-amber-500"
-              />
-
-              <button
-                type="submit"
-                disabled={isSavingProfile}
-                className="rounded-full bg-stone-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-400"
-              >
-                {isSavingProfile ? 'Saving...' : 'Save Profile'}
-              </button>
-            </form>
-          </div>
-        ) : null}
-
-        <div className="no-print mt-8 grid gap-5 md:grid-cols-3">
-          <div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-[0_20px_55px_rgba(0,0,0,0.05)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-amber-700">What Next</p>
-            <p className="mt-4 text-sm leading-7 text-stone-600">
-              Return to the catalog to keep browsing materials, or open the cart to review your current order.
-            </p>
-          </div>
-          <div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-[0_20px_55px_rgba(0,0,0,0.05)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-amber-700">Payment Check</p>
-            <p className="mt-4 text-sm leading-7 text-stone-600">
-              Successful orders are cleared from the cart. Pending or failed payments stay available for review or retry.
-            </p>
-          </div>
-          <div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-[0_20px_55px_rgba(0,0,0,0.05)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-amber-700">Admin Route</p>
-            <p className="mt-4 text-sm leading-7 text-stone-600">
-              Admin remains isolated on its own route and is not mixed into this storefront checkout flow.
-            </p>
-          </div>
-        </div>
       </div>
     </main>
   )
