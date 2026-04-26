@@ -40,6 +40,8 @@ function HamburgerIcon({ isOpen }) {
 
 export default function SiteHeader({ cartItemCount, customerAccount, onLogout, onOpenAuth, onOpenCart, onOpenOrders, openPage }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [touchStartX, setTouchStartX] = useState(0)
+  const [touchOffset, setTouchOffset] = useState(0)
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -53,10 +55,42 @@ export default function SiteHeader({ cartItemCount, customerAccount, onLogout, o
     }
   }, [isMobileMenuOpen])
 
+  function closeMobileMenu() {
+    setIsMobileMenuOpen(false)
+    setTouchOffset(0)
+    setTouchStartX(0)
+  }
+
   function handleNavigate(action) {
     action(openPage)
-    setIsMobileMenuOpen(false)
+    closeMobileMenu()
   }
+
+  function handleTouchStart(event) {
+    setTouchStartX(event.touches[0]?.clientX || 0)
+  }
+
+  function handleTouchMove(event) {
+    const currentX = event.touches[0]?.clientX || 0
+    const delta = currentX - touchStartX
+
+    if (delta > 0) {
+      setTouchOffset(Math.min(delta, 120))
+    }
+  }
+
+  function handleTouchEnd() {
+    if (touchOffset > 72) {
+      closeMobileMenu()
+      return
+    }
+
+    setTouchOffset(0)
+    setTouchStartX(0)
+  }
+
+  const accountLabel = customerAccount?.name?.trim() || customerAccount?.email || 'Guest'
+  const accountInitial = accountLabel.charAt(0).toUpperCase() || 'G'
 
   return (
     <>
@@ -154,21 +188,50 @@ export default function SiteHeader({ cartItemCount, customerAccount, onLogout, o
 
         {isMobileMenuOpen ? (
           <div className="lg:hidden">
-            <div className="fixed inset-0 z-40 bg-stone-950/45 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
-            <div className="fixed right-0 top-0 z-50 flex h-full w-[86vw] max-w-sm flex-col border-l border-stone-200 bg-[linear-gradient(180deg,#ffffff_0%,#f6f0e5_100%)] px-5 pb-6 pt-24 shadow-[-24px_0_60px_rgba(15,23,42,0.18)]">
-              <div className="rounded-[1.5rem] border border-stone-200 bg-white px-4 py-4 shadow-[0_16px_40px_rgba(0,0,0,0.06)]">
+            <div
+              className="fixed inset-0 z-40 bg-stone-950/45 backdrop-blur-sm transition-opacity duration-300"
+              onClick={closeMobileMenu}
+            />
+            <div
+              className="fixed right-0 top-0 z-50 flex h-full w-[86vw] max-w-sm flex-col border-l border-stone-200 bg-[linear-gradient(180deg,#ffffff_0%,#f6f0e5_100%)] px-5 pb-6 pt-8 shadow-[-24px_0_60px_rgba(15,23,42,0.18)] transition-transform duration-300 ease-out"
+              onTouchEnd={handleTouchEnd}
+              onTouchMove={handleTouchMove}
+              onTouchStart={handleTouchStart}
+              style={{ transform: `translateX(${touchOffset}px)` }}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-stone-950 text-sm font-semibold text-white">
+                    {accountInitial}
+                  </span>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-700">Mobile Menu</p>
+                    <p className="mt-1 text-sm font-semibold text-stone-950">{accountLabel}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={closeMobileMenu}
+                  className="rounded-full border border-stone-300 p-3 text-stone-900 transition hover:border-stone-950"
+                  aria-label="Close menu"
+                >
+                  <HamburgerIcon isOpen />
+                </button>
+              </div>
+
+              <div className="mt-6 rounded-[1.5rem] border border-stone-200 bg-white px-4 py-4 shadow-[0_16px_40px_rgba(0,0,0,0.06)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-700">Quick Access</p>
                 <p className="mt-2 text-sm leading-7 text-stone-600">
-                  Browse the storefront, jump to sections, and manage your account from one place.
+                  Browse the storefront, jump to sections, and manage your account from one place. Swipe right to close.
                 </p>
               </div>
 
               <div className="mt-5 grid gap-3">
-                {mobileLinks.map((link) => (
+                {mobileLinks.map((link, index) => (
                   <button
                     key={link.label}
                     onClick={() => handleNavigate(link.action)}
-                    className="rounded-2xl border border-stone-200 bg-white px-4 py-4 text-left text-sm font-semibold uppercase tracking-[0.18em] text-stone-900 transition hover:border-stone-950"
+                    className="translate-x-0 rounded-2xl border border-stone-200 bg-white px-4 py-4 text-left text-sm font-semibold uppercase tracking-[0.18em] text-stone-900 opacity-100 transition duration-300 hover:border-stone-950"
+                    style={{ transitionDelay: `${90 + index * 35}ms` }}
                   >
                     {link.label}
                   </button>
@@ -181,7 +244,7 @@ export default function SiteHeader({ cartItemCount, customerAccount, onLogout, o
                     <button
                       onClick={() => {
                         onOpenOrders()
-                        setIsMobileMenuOpen(false)
+                        closeMobileMenu()
                       }}
                       className="rounded-2xl border border-stone-200 bg-white px-4 py-4 text-left text-sm font-semibold uppercase tracking-[0.18em] text-stone-900 transition hover:border-stone-950"
                     >
@@ -190,7 +253,7 @@ export default function SiteHeader({ cartItemCount, customerAccount, onLogout, o
                     <button
                       onClick={() => {
                         onLogout()
-                        setIsMobileMenuOpen(false)
+                        closeMobileMenu()
                       }}
                       className="rounded-2xl border border-stone-950 bg-stone-950 px-4 py-4 text-left text-sm font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-stone-800"
                     >
@@ -201,7 +264,7 @@ export default function SiteHeader({ cartItemCount, customerAccount, onLogout, o
                   <button
                     onClick={() => {
                       onOpenAuth('login')
-                      setIsMobileMenuOpen(false)
+                      closeMobileMenu()
                     }}
                     className="w-full rounded-2xl border border-stone-950 bg-stone-950 px-4 py-4 text-left text-sm font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-stone-800"
                   >
