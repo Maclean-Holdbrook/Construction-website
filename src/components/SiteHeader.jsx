@@ -90,7 +90,6 @@ export default function SiteHeader({ cartItemCount, customerAccount, onLogout, o
   }
 
   const accountLabel = customerAccount?.name?.trim() || customerAccount?.email || 'Guest'
-  const accountInitial = accountLabel.charAt(0).toUpperCase() || 'G'
 
   return (
     <>
@@ -193,44 +192,29 @@ export default function SiteHeader({ cartItemCount, customerAccount, onLogout, o
               onClick={closeMobileMenu}
             />
             <div
-              className="fixed right-0 top-0 z-50 flex h-full w-[86vw] max-w-sm flex-col border-l border-stone-200 bg-[linear-gradient(180deg,#ffffff_0%,#f6f0e5_100%)] px-5 pb-6 pt-8 shadow-[-24px_0_60px_rgba(15,23,42,0.18)] transition-transform duration-300 ease-out"
+              className="absolute right-4 top-[calc(100%+0.35rem)] z-50 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-[1.75rem] border border-stone-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.18)] transition-transform duration-300 ease-out sm:right-6"
               onTouchEnd={handleTouchEnd}
               onTouchMove={handleTouchMove}
               onTouchStart={handleTouchStart}
               style={{ transform: `translateX(${touchOffset}px)` }}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-stone-950 text-sm font-semibold text-white">
-                    {accountInitial}
-                  </span>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-700">Mobile Menu</p>
-                    <p className="mt-1 text-sm font-semibold text-stone-950">{accountLabel}</p>
-                  </div>
-                </div>
+              <div className="flex items-center justify-between border-b border-stone-200 px-5 py-4">
+                <p className="text-sm font-semibold text-stone-950">{accountLabel}</p>
                 <button
                   onClick={closeMobileMenu}
-                  className="rounded-full border border-stone-300 p-3 text-stone-900 transition hover:border-stone-950"
+                  className="rounded-full p-2 text-stone-500 transition hover:bg-stone-100 hover:text-stone-950"
                   aria-label="Close menu"
                 >
                   <HamburgerIcon isOpen />
                 </button>
               </div>
 
-              <div className="mt-6 rounded-[1.5rem] border border-stone-200 bg-white px-4 py-4 shadow-[0_16px_40px_rgba(0,0,0,0.06)]">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-700">Quick Access</p>
-                <p className="mt-2 text-sm leading-7 text-stone-600">
-                  Browse the storefront, jump to sections, and manage your account from one place. Swipe right to close.
-                </p>
-              </div>
-
-              <div className="mt-5 grid gap-3">
+              <div className="grid">
                 {mobileLinks.map((link, index) => (
                   <button
                     key={link.label}
                     onClick={() => handleNavigate(link.action)}
-                    className="translate-x-0 rounded-2xl border border-stone-200 bg-white px-4 py-4 text-left text-sm font-semibold uppercase tracking-[0.18em] text-stone-900 opacity-100 transition duration-300 hover:border-stone-950"
+                    className="translate-x-0 border-b border-stone-200 px-5 py-4 text-left text-base font-medium text-stone-900 opacity-100 transition duration-300 hover:bg-stone-50"
                     style={{ transitionDelay: `${90 + index * 35}ms` }}
                   >
                     {link.label}
@@ -238,15 +222,15 @@ export default function SiteHeader({ cartItemCount, customerAccount, onLogout, o
                 ))}
               </div>
 
-              <div className="mt-5 border-t border-stone-200 pt-5">
+              <div className="grid">
                 {customerAccount ? (
-                  <div className="grid gap-3">
+                  <div className="grid">
                     <button
                       onClick={() => {
                         onOpenOrders()
                         closeMobileMenu()
                       }}
-                      className="rounded-2xl border border-stone-200 bg-white px-4 py-4 text-left text-sm font-semibold uppercase tracking-[0.18em] text-stone-900 transition hover:border-stone-950"
+                      className="border-b border-stone-200 px-5 py-4 text-left text-base font-medium text-stone-900 transition hover:bg-stone-50"
                     >
                       My Orders
                     </button>
@@ -255,7 +239,7 @@ export default function SiteHeader({ cartItemCount, customerAccount, onLogout, o
                         onLogout()
                         closeMobileMenu()
                       }}
-                      className="rounded-2xl border border-stone-950 bg-stone-950 px-4 py-4 text-left text-sm font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-stone-800"
+                      className="px-5 py-4 text-left text-base font-medium text-red-600 transition hover:bg-red-50"
                     >
                       Log Out
                     </button>
@@ -266,7 +250,7 @@ export default function SiteHeader({ cartItemCount, customerAccount, onLogout, o
                       onOpenAuth('login')
                       closeMobileMenu()
                     }}
-                    className="w-full rounded-2xl border border-stone-950 bg-stone-950 px-4 py-4 text-left text-sm font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-stone-800"
+                    className="w-full px-5 py-4 text-left text-base font-medium text-amber-700 transition hover:bg-amber-50"
                   >
                     Sign Up / Login
                   </button>
