@@ -1,6 +1,4 @@
-import { useState } from 'react'
 import { topbarDetails } from '../data/siteContent'
-import { apiFetch } from '../lib/api'
 
 function ContactIcon({ type }) {
   if (type === 'message-circle') {
@@ -53,57 +51,7 @@ function getContactHref(item) {
   return ''
 }
 
-export default function SiteFooter({ onAlert, onOpenPage }) {
-  const [contactForm, setContactForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    subject: '',
-    message: '',
-  })
-  const [isSubmittingContact, setIsSubmittingContact] = useState(false)
-
-  async function handleContactSubmit(event) {
-    event.preventDefault()
-    setIsSubmittingContact(true)
-
-    try {
-      const response = await apiFetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(contactForm),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Unable to send message.')
-      }
-
-      onAlert({
-        autoCloseMs: 2400,
-        message: data.message || 'Message sent successfully.',
-        title: 'Message sent',
-        variant: 'success',
-      })
-      setContactForm({
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        message: '',
-      })
-    } catch (error) {
-      onAlert({
-        message: error instanceof Error ? error.message : 'Unable to send message.',
-        title: 'Message could not be sent',
-        variant: 'error',
-      })
-    } finally {
-      setIsSubmittingContact(false)
-    }
-  }
-
+export default function SiteFooter() {
   return (
     <footer className="relative overflow-hidden bg-[linear-gradient(135deg,#111111_0%,#1c1c1c_45%,#2d2d2d_100%)] text-white">
       <div className="absolute inset-0 opacity-10">
@@ -149,71 +97,6 @@ export default function SiteFooter({ onAlert, onOpenPage }) {
           </p>
         </div>
 
-        <div className="mt-12 grid gap-10 lg:grid-cols-[0.7fr_0.9fr_1.1fr]">
-          <div className="text-center lg:text-left">
-            <p className="font-serif text-4xl text-white">QUICK LINK</p>
-            <div className="mt-6 space-y-4 text-lg text-stone-300">
-              <button onClick={() => onOpenPage('/')} className="block w-full text-center transition hover:text-white lg:text-left">Home</button>
-              <button onClick={() => onOpenPage('/products')} className="block w-full text-center transition hover:text-white lg:text-left">Products</button>
-              <button onClick={() => onOpenPage('/', 'service')} className="block w-full text-center transition hover:text-white lg:text-left">Service</button>
-              <button onClick={() => onOpenPage('/', 'about')} className="block w-full text-center transition hover:text-white lg:text-left">About Us</button>
-              <button onClick={() => onOpenPage('/', 'contact')} className="block w-full text-center transition hover:text-white lg:text-left">Contact Us</button>
-            </div>
-          </div>
-
-          <div className="text-center lg:text-left">
-            <p className="font-serif text-4xl text-white">PRODUCT CENTER</p>
-            <div className="mt-6 space-y-4 text-lg text-stone-300">
-              <button onClick={() => onOpenPage('/products')} className="block w-full text-center transition hover:text-white lg:text-left">Cement</button>
-              <button onClick={() => onOpenPage('/products')} className="block w-full text-center transition hover:text-white lg:text-left">Concrete Blocks</button>
-              <button onClick={() => onOpenPage('/products')} className="block w-full text-center transition hover:text-white lg:text-left">Sand</button>
-              <button onClick={() => onOpenPage('/products')} className="block w-full text-center transition hover:text-white lg:text-left">Crushed Stones</button>
-              <button onClick={() => onOpenPage('/products')} className="block w-full text-center transition hover:text-white lg:text-left">Iron Rods</button>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-center font-serif text-4xl text-white lg:text-left">CONTACT US</p>
-            <form className="mt-6 space-y-4" onSubmit={handleContactSubmit}>
-              <input
-                value={contactForm.name}
-                onChange={(event) => setContactForm((current) => ({ ...current, name: event.target.value }))}
-                type="text"
-                placeholder="Name"
-                className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-stone-300 outline-none transition focus:border-amber-400"
-              />
-              <input
-                value={contactForm.phone}
-                onChange={(event) => setContactForm((current) => ({ ...current, phone: event.target.value }))}
-                type="tel"
-                placeholder="Phone"
-                className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-stone-300 outline-none transition focus:border-amber-400"
-              />
-              <input
-                value={contactForm.email}
-                onChange={(event) => setContactForm((current) => ({ ...current, email: event.target.value }))}
-                type="email"
-                placeholder="Email"
-                className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-stone-300 outline-none transition focus:border-amber-400"
-              />
-              <textarea
-                value={contactForm.message}
-                onChange={(event) => setContactForm((current) => ({ ...current, message: event.target.value }))}
-                rows="5"
-                placeholder="Message"
-                className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-stone-300 outline-none transition focus:border-amber-400"
-              />
-
-              <button
-                type="submit"
-                disabled={isSubmittingContact}
-                className="rounded-full bg-amber-500 px-6 py-3 text-sm font-semibold text-stone-950 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-amber-300"
-              >
-                {isSubmittingContact ? 'Sending...' : 'Send'}
-              </button>
-            </form>
-          </div>
-        </div>
       </div>
 
       <div className="relative border-t border-white/10 bg-white/5">
