@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import AlertModal from './components/AlertModal'
 import AuthModal from './components/AuthModal'
 import CartModal from './components/CartModal'
 import FloatingCartButton from './components/FloatingCartButton'
@@ -163,7 +164,6 @@ export default function App() {
   const [activeProductId, setActiveProductId] = useState(initialRoute.productId || '')
   const [products, setProducts] = useState([])
   const [isLoadingProducts, setIsLoadingProducts] = useState(true)
-  const [catalogNotice, setCatalogNotice] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
   const [searchTerm, setSearchTerm] = useState('')
   const [sortOption, setSortOption] = useState('featured')
@@ -173,12 +173,10 @@ export default function App() {
   const [authMode, setAuthMode] = useState('login')
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('customerToken') || '')
   const [customerAccount, setCustomerAccount] = useState(storedAccount)
-  const [authError, setAuthError] = useState('')
   const [isSubmittingAuth, setIsSubmittingAuth] = useState(false)
   const [orderHistory, setOrderHistory] = useState([])
   const [isLoadingOrderHistory, setIsLoadingOrderHistory] = useState(false)
   const [isSavingProfile, setIsSavingProfile] = useState(false)
-  const [profileMessage, setProfileMessage] = useState(null)
   const [authForm, setAuthForm] = useState({
     name: '',
     email: '',
@@ -187,8 +185,6 @@ export default function App() {
     password: '',
     confirmPassword: '',
   })
-  const [cartMessage, setCartMessage] = useState('')
-  const [checkoutError, setCheckoutError] = useState('')
   const [isSubmittingCheckout, setIsSubmittingCheckout] = useState(false)
   const [paymentStatus, setPaymentStatus] = useState({
     state: 'idle',
@@ -200,6 +196,7 @@ export default function App() {
   })
   const [customer, setCustomer] = useState(() => customerFromAccount(storedAccount))
   const [profileForm, setProfileForm] = useState(() => customerFromAccount(storedAccount))
+  const [alertModal, setAlertModal] = useState(null)
   const [cart, setCart] = useState(() => {
     try {
       const saved = localStorage.getItem('buildmart-cart')
@@ -257,6 +254,16 @@ export default function App() {
     [cartSubtotal, deliveryFee]
   )
   const currentRouteUrl = getRouteUrl()
+
+  function showAlert({ autoCloseMs = 0, message, title, variant = 'info' }) {
+    setAlertModal({
+      autoCloseMs,
+      id: `${Date.now()}-${Math.random()}`,
+      message,
+      title,
+      variant,
+    })
+  }
 
   useEffect(() => {
     localStorage.setItem('buildmart-cart', JSON.stringify(cart))
@@ -366,13 +373,13 @@ export default function App() {
   }, [currentPage, pendingSection, activeProductId])
 
   useEffect(() => {
-    if (!cartMessage) {
+    if (!alertModal?.autoCloseMs) {
       return
     }
 
-    const timeoutId = window.setTimeout(() => setCartMessage(''), 1800)
+    const timeoutId = window.setTimeout(() => setAlertModal(null), alertModal.autoCloseMs)
     return () => window.clearTimeout(timeoutId)
-  }, [cartMessage])
+  }, [alertModal])
 
   useEffect(() => {
     let ignore = false
@@ -384,12 +391,15 @@ export default function App() {
 
         if (!ignore) {
           setProducts(Array.isArray(data.products) ? data.products : fallbackProducts)
-          setCatalogNotice('')
         }
       } catch {
         if (!ignore) {
           setProducts(fallbackProducts)
-          setCatalogNotice('Live catalog is temporarily unavailable. Showing the local product list.')
+          showAlert({
+            message: 'Live catalog is temporarily unavailable. Showing the local product list.',
+            title: 'Catalog fallback active',
+            variant: 'warning',
+          })
         }
       } finally {
         if (!ignore) {
@@ -492,10 +502,13 @@ export default function App() {
       setIsLoadingProducts(true)
       const data = await parseJson(await apiFetch('/api/products'))
       setProducts(Array.isArray(data.products) ? data.products : fallbackProducts)
-      setCatalogNotice('')
     } catch {
       setProducts(fallbackProducts)
-      setCatalogNotice('Live catalog is temporarily unavailable. Showing the local product list.')
+      showAlert({
+        message: 'Live catalog is temporarily unavailable. Showing the local product list.',
+        title: 'Catalog fallback active',
+        variant: 'warning',
+      })
     } finally {
       setIsLoadingProducts(false)
     }
@@ -591,13 +604,11 @@ export default function App() {
 
   function openAuthModal(mode = 'login') {
     setAuthMode(mode)
-    setAuthError('')
     setIsAuthModalOpen(true)
   }
 
   function closeAuthModal() {
     setIsAuthModalOpen(false)
-    setAuthError('')
   }
 
   function updateAuthForm(field, value) {
@@ -605,7 +616,6 @@ export default function App() {
   }
 
   function updateProfileField(field, value) {
-    setProfileMessage(null)
     setProfileForm((current) => ({ ...current, [field]: value }))
   }
 
@@ -626,7 +636,6 @@ export default function App() {
   }
 
   function addToCart(product, quantity = 1) {
-    setCheckoutError('')
     const safeQuantity = Math.max(1, quantity)
 
     setCart((currentCart) => {
@@ -640,7 +649,12 @@ export default function App() {
       return [...currentCart, { ...product, quantity: safeQuantity }]
     })
 
-    setCartMessage(`${product.name} added to cart.`)
+    showAlert({
+      autoCloseMs: 1800,
+      message: `${product.name} added to cart.`,
+      title: 'Added to cart',
+      variant: 'success',
+    })
   }
 
   function updateQuantity(productId, quantity) {
@@ -660,7 +674,6 @@ export default function App() {
   }
 
   function updateCustomerField(field, value) {
-    setCheckoutError('')
     setCustomer((current) => ({ ...current, [field]: value }))
   }
 
@@ -703,27 +716,38 @@ export default function App() {
     event.preventDefault()
 
     if (!authToken || !customerAccount) {
-      setCheckoutError('Log in before checkout so this order is saved to your account.')
+      showAlert({
+        message: 'Log in before checkout so this order is saved to your account.',
+        title: 'Login required',
+        variant: 'warning',
+      })
       openAuthModal('login')
       return
     }
 
     if (cart.length === 0) {
-      setCheckoutError('Add at least one product before checkout.')
+      showAlert({ message: 'Add at least one product before checkout.', title: 'Cart is empty', variant: 'warning' })
       return
     }
 
     if (!customer.name.trim() || !customer.email.trim() || !customer.phone.trim()) {
-      setCheckoutError('Complete your customer details before continuing.')
+      showAlert({
+        message: 'Complete your customer details before continuing.',
+        title: 'Customer details missing',
+        variant: 'warning',
+      })
       return
     }
 
     if (customer.deliveryMethod === 'delivery' && !customer.address.trim()) {
-      setCheckoutError('Enter a delivery address before continuing.')
+      showAlert({
+        message: 'Enter a delivery address before continuing.',
+        title: 'Delivery address required',
+        variant: 'warning',
+      })
       return
     }
 
-    setCheckoutError('')
     setIsSubmittingCheckout(true)
 
     try {
@@ -756,7 +780,11 @@ export default function App() {
 
       window.location.href = data.authorizationUrl
     } catch (error) {
-      setCheckoutError(error instanceof Error ? error.message : 'Unable to initialize checkout.')
+      showAlert({
+        message: error instanceof Error ? error.message : 'Unable to initialize checkout.',
+        title: 'Checkout could not start',
+        variant: 'error',
+      })
     } finally {
       setIsSubmittingCheckout(false)
     }
@@ -764,7 +792,6 @@ export default function App() {
 
   async function handleAuthSubmit(event) {
     event.preventDefault()
-    setAuthError('')
     setIsSubmittingAuth(true)
 
     try {
@@ -809,11 +836,19 @@ export default function App() {
         password: '',
         confirmPassword: '',
       })
-      setCheckoutError('')
-      setCartMessage(`Welcome back, ${data.user.name}. Your account is ready for checkout.`)
+      showAlert({
+        autoCloseMs: 2200,
+        message: `Welcome back, ${data.user.name}. Your account is ready for checkout.`,
+        title: authMode === 'signup' ? 'Account created' : 'Signed in',
+        variant: 'success',
+      })
       closeAuthModal()
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : 'Unable to complete authentication.')
+      showAlert({
+        message: error instanceof Error ? error.message : 'Unable to complete authentication.',
+        title: 'Authentication failed',
+        variant: 'error',
+      })
     } finally {
       setIsSubmittingAuth(false)
     }
@@ -827,7 +862,6 @@ export default function App() {
       return
     }
 
-    setProfileMessage(null)
     setIsSavingProfile(true)
 
     try {
@@ -844,11 +878,17 @@ export default function App() {
 
       setCustomerAccount(data.user)
       localStorage.setItem('customerAccount', JSON.stringify(data.user))
-      setProfileMessage({ type: 'success', message: 'Profile updated successfully.' })
+      showAlert({
+        autoCloseMs: 2200,
+        message: 'Profile updated successfully.',
+        title: 'Profile saved',
+        variant: 'success',
+      })
     } catch (error) {
-      setProfileMessage({
-        type: 'error',
+      showAlert({
         message: error instanceof Error ? error.message : 'Unable to update profile.',
+        title: 'Profile could not be updated',
+        variant: 'error',
       })
     } finally {
       setIsSavingProfile(false)
@@ -892,7 +932,12 @@ export default function App() {
       window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
     }
 
-    setCartMessage('You have been logged out of your customer account.')
+    showAlert({
+      autoCloseMs: 1800,
+      message: 'You have been logged out of your customer account.',
+      title: 'Signed out',
+      variant: 'info',
+    })
   }
 
   const activeProduct = useMemo(
@@ -911,6 +956,13 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#f2ede3] text-stone-950">
+      <AlertModal
+        isOpen={Boolean(alertModal)}
+        message={alertModal?.message || ''}
+        onClose={() => setAlertModal(null)}
+        title={alertModal?.title || ''}
+        variant={alertModal?.variant || 'info'}
+      />
       <SiteHeader
         cartItemCount={cartItemCount}
         customerAccount={customerAccount}
@@ -937,7 +989,6 @@ export default function App() {
           orderHistory={orderHistory}
           paymentStatus={paymentStatus}
           profileForm={profileForm}
-          profileMessage={profileMessage}
         />
       ) : currentPage === 'product-detail' ? (
         <ProductDetailPage
@@ -957,12 +1008,11 @@ export default function App() {
           activeCategory={activeCategory}
           cartItemCount={cartItemCount}
           cartSubtotal={orderTotal}
-          cartMessage={cartMessage}
           categories={categories}
-          catalogNotice={catalogNotice}
           filteredProducts={filteredProducts}
           isLoadingProducts={isLoadingProducts}
           onAddToCart={addToCart}
+          onAlert={showAlert}
           onChangeCategory={setActiveCategory}
           onChangeSearch={setSearchTerm}
           onChangeSort={setSortOption}
@@ -978,12 +1028,11 @@ export default function App() {
         />
       ) : (
         <HomePage
-          cartMessage={cartMessage}
-          catalogNotice={catalogNotice}
           featuredProducts={featuredProducts}
           filteredProducts={filteredProducts}
           isLoadingProducts={isLoadingProducts}
           onAddToCart={addToCart}
+          onAlert={showAlert}
           onOpenCart={() => setIsCartOpen(true)}
           onOpenPage={openPage}
           onRetryPayment={handleRetryPayment}
@@ -1015,7 +1064,7 @@ export default function App() {
       <CartModal
         cart={cart}
         cartSubtotal={cartSubtotal}
-        checkoutError={checkoutError}
+        checkoutError=""
         customer={customer}
         customerAccount={customerAccount}
         deliveryFee={deliveryFee}
@@ -1035,7 +1084,7 @@ export default function App() {
       <AuthModal
         authForm={authForm}
         authMode={authMode}
-        errorMessage={authError}
+        errorMessage=""
         isOpen={isAuthModalOpen}
         isSubmitting={isSubmittingAuth}
         onChange={updateAuthForm}

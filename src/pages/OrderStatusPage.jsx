@@ -23,7 +23,6 @@ export default function OrderStatusPage({
   orderHistory,
   paymentStatus,
   profileForm,
-  profileMessage,
 }) {
   const isSuccess = paymentStatus.state === 'success'
   const isError = paymentStatus.state === 'error'
@@ -309,12 +308,6 @@ export default function OrderStatusPage({
                 placeholder="Delivery address"
                 className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-amber-500"
               />
-
-              {profileMessage ? (
-                <p className={`text-sm ${profileMessage.type === 'error' ? 'text-rose-600' : 'text-emerald-700'}`}>
-                  {profileMessage.message}
-                </p>
-              ) : null}
 
               <button
                 type="submit"

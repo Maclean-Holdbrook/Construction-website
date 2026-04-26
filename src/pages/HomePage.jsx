@@ -57,11 +57,10 @@ function getContactHref(item) {
 }
 
 export default function HomePage({
-  cartMessage,
-  catalogNotice,
   filteredProducts,
   isLoadingProducts,
   onAddToCart,
+  onAlert,
   onOpenPage,
   onRetryPayment,
   onSelectProduct,
@@ -75,12 +74,10 @@ export default function HomePage({
     subject: '',
     message: '',
   })
-  const [contactStatus, setContactStatus] = useState({ type: '', message: '' })
   const [isSubmittingContact, setIsSubmittingContact] = useState(false)
 
   async function handleContactSubmit(event) {
     event.preventDefault()
-    setContactStatus({ type: '', message: '' })
     setIsSubmittingContact(true)
 
     try {
@@ -94,7 +91,12 @@ export default function HomePage({
 
       const data = await parseJson(response)
 
-      setContactStatus({ type: 'success', message: data.message || 'Message sent successfully.' })
+      onAlert({
+        autoCloseMs: 2400,
+        message: data.message || 'Message sent successfully.',
+        title: 'Message sent',
+        variant: 'success',
+      })
       setContactForm({
         name: '',
         email: '',
@@ -103,9 +105,10 @@ export default function HomePage({
         message: '',
       })
     } catch (error) {
-      setContactStatus({
-        type: 'error',
+      onAlert({
         message: error instanceof Error ? error.message : 'Unable to send message.',
+        title: 'Message could not be sent',
+        variant: 'error',
       })
     } finally {
       setIsSubmittingContact(false)
@@ -180,18 +183,6 @@ export default function HomePage({
               Open Full Catalog
             </button>
           </div>
-
-          {catalogNotice ? (
-            <div className="mt-6 rounded-[1.3rem] border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
-              {catalogNotice}
-            </div>
-          ) : null}
-
-          {cartMessage ? (
-            <div className="mt-6 rounded-[1.3rem] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800">
-              {cartMessage}
-            </div>
-          ) : null}
 
           {isLoadingProducts ? (
             <div className="mt-8 rounded-[1.6rem] border border-stone-200 bg-white px-6 py-16 text-center text-sm text-stone-500">
@@ -341,12 +332,6 @@ export default function HomePage({
                   className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-amber-500"
                 />
 
-                {contactStatus.message ? (
-                  <p className={`text-sm ${contactStatus.type === 'success' ? 'text-emerald-700' : 'text-rose-600'}`}>
-                    {contactStatus.message}
-                  </p>
-                ) : null}
-
                 <button
                   type="submit"
                   disabled={isSubmittingContact}
@@ -360,7 +345,7 @@ export default function HomePage({
         </section>
       </main>
 
-      <SiteFooter onOpenPage={onOpenPage} />
+      <SiteFooter onAlert={onAlert} onOpenPage={onOpenPage} />
     </>
   )
 }

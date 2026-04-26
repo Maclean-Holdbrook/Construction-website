@@ -53,7 +53,7 @@ function getContactHref(item) {
   return ''
 }
 
-export default function SiteFooter({ onOpenPage }) {
+export default function SiteFooter({ onAlert, onOpenPage }) {
   const [contactForm, setContactForm] = useState({
     name: '',
     email: '',
@@ -61,12 +61,10 @@ export default function SiteFooter({ onOpenPage }) {
     subject: '',
     message: '',
   })
-  const [contactStatus, setContactStatus] = useState({ type: '', message: '' })
   const [isSubmittingContact, setIsSubmittingContact] = useState(false)
 
   async function handleContactSubmit(event) {
     event.preventDefault()
-    setContactStatus({ type: '', message: '' })
     setIsSubmittingContact(true)
 
     try {
@@ -82,7 +80,12 @@ export default function SiteFooter({ onOpenPage }) {
         throw new Error(data.message || 'Unable to send message.')
       }
 
-      setContactStatus({ type: 'success', message: data.message || 'Message sent successfully.' })
+      onAlert({
+        autoCloseMs: 2400,
+        message: data.message || 'Message sent successfully.',
+        title: 'Message sent',
+        variant: 'success',
+      })
       setContactForm({
         name: '',
         email: '',
@@ -91,9 +94,10 @@ export default function SiteFooter({ onOpenPage }) {
         message: '',
       })
     } catch (error) {
-      setContactStatus({
-        type: 'error',
+      onAlert({
         message: error instanceof Error ? error.message : 'Unable to send message.',
+        title: 'Message could not be sent',
+        variant: 'error',
       })
     } finally {
       setIsSubmittingContact(false)
@@ -199,12 +203,6 @@ export default function SiteFooter({ onOpenPage }) {
                 placeholder="Message"
                 className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-stone-300 outline-none transition focus:border-amber-400"
               />
-
-              {contactStatus.message ? (
-                <p className={`text-sm ${contactStatus.type === 'success' ? 'text-emerald-300' : 'text-rose-300'}`}>
-                  {contactStatus.message}
-                </p>
-              ) : null}
 
               <button
                 type="submit"

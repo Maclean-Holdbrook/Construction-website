@@ -5,9 +5,7 @@ export default function ProductsPage({
   activeCategory,
   cartItemCount,
   cartSubtotal,
-  cartMessage,
   categories,
-  catalogNotice,
   filteredProducts,
   isLoadingProducts,
   onAddToCart,
@@ -157,18 +155,6 @@ export default function ProductsPage({
                 </div>
               </div>
               </div>
-
-              {catalogNotice ? (
-                <div className="mt-4 rounded-[1.3rem] border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
-                  {catalogNotice}
-                </div>
-              ) : null}
-
-              {cartMessage ? (
-                <div className="mt-4 rounded-[1.3rem] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800">
-                  {cartMessage}
-                </div>
-              ) : null}
 
               {isLoadingProducts ? (
                 <div className="mt-4 rounded-[1.6rem] border border-stone-200 bg-white px-6 py-16 text-center text-sm text-stone-500">

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import AlertModal from '../components/AlertModal'
 import { apiFetch } from '../lib/api'
 import { parseJson } from '../lib/http'
 
@@ -43,8 +44,7 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
   const [orders, setOrders] = useState([])
   const [orderFilter, setOrderFilter] = useState('all')
   const [orderStatusDrafts, setOrderStatusDrafts] = useState({})
-  const [errorMessage, setErrorMessage] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
+  const [adminAlert, setAdminAlert] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeletingId, setIsDeletingId] = useState('')
   const [isLoadingOrders, setIsLoadingOrders] = useState(false)
@@ -82,6 +82,19 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
     ).length,
   }
 
+  function showAdminAlert(variant, title, message, autoCloseMs = variant === 'success' ? 2200 : 0) {
+    setAdminAlert({ variant, title, message, autoCloseMs, id: `${Date.now()}-${Math.random()}` })
+  }
+
+  useEffect(() => {
+    if (!adminAlert?.autoCloseMs) {
+      return undefined
+    }
+
+    const timeoutId = window.setTimeout(() => setAdminAlert(null), adminAlert.autoCloseMs)
+    return () => window.clearTimeout(timeoutId)
+  }, [adminAlert])
+
   useEffect(() => {
     if (!adminToken) {
       return
@@ -108,7 +121,7 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
         }
       } catch (error) {
         if (!ignore) {
-          setErrorMessage(error instanceof Error ? error.message : 'Unable to load orders.')
+          showAdminAlert('error', 'Orders could not be loaded', error instanceof Error ? error.message : 'Unable to load orders.')
         }
       } finally {
         if (!ignore) {
@@ -141,8 +154,6 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
       description: product.description,
       imageUrl: product.imageUrl,
     })
-    setErrorMessage('')
-    setSuccessMessage('')
   }
 
   function handleImageFileChange(event) {
@@ -153,7 +164,7 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
     }
 
     if (!file.type.startsWith('image/')) {
-      setErrorMessage('Selected file must be an image.')
+      showAdminAlert('warning', 'Image format not supported', 'Selected file must be an image.')
       return
     }
 
@@ -164,19 +175,16 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
         ...current,
         imageUrl: nextImageUrl,
       }))
-      setErrorMessage('')
-      setSuccessMessage('Image loaded into preview. Save the product to keep it.')
+      showAdminAlert('success', 'Image preview ready', 'Image loaded into preview. Save the product to keep it.')
     }
     reader.onerror = () => {
-      setErrorMessage('Unable to read the selected image file.')
+      showAdminAlert('error', 'Image could not be read', 'Unable to read the selected image file.')
     }
     reader.readAsDataURL(file)
   }
 
   async function handleLogin(event) {
     event.preventDefault()
-    setErrorMessage('')
-    setSuccessMessage('')
     setIsSubmitting(true)
 
     try {
@@ -195,9 +203,9 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
       localStorage.setItem('adminToken', data.token)
       localStorage.setItem('adminUsername', data.username)
       setCredentials({ username: '', password: '' })
-      setSuccessMessage('Admin login successful.')
+      showAdminAlert('success', 'Admin signed in', 'Admin login successful.')
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to log in.')
+      showAdminAlert('error', 'Login failed', error instanceof Error ? error.message : 'Unable to log in.')
     } finally {
       setIsSubmitting(false)
     }
@@ -208,8 +216,6 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
     setAdminUsername('')
     localStorage.removeItem('adminToken')
     localStorage.removeItem('adminUsername')
-    setSuccessMessage('')
-    setErrorMessage('')
     resetProductForm()
     setOrders([])
     setOrderStatusDrafts({})
@@ -218,8 +224,6 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
 
   async function handleProductSubmit(event) {
     event.preventDefault()
-    setErrorMessage('')
-    setSuccessMessage('')
     setIsSubmitting(true)
 
     try {
@@ -241,18 +245,16 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
       )
 
       await onProductsRefresh()
-      setSuccessMessage(editingProductId ? 'Product updated successfully.' : 'Product created successfully.')
+      showAdminAlert('success', editingProductId ? 'Product updated' : 'Product created', editingProductId ? 'Product updated successfully.' : 'Product created successfully.')
       resetProductForm()
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to save product.')
+      showAdminAlert('error', 'Product could not be saved', error instanceof Error ? error.message : 'Unable to save product.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
   async function handleDeleteProduct(productId) {
-    setErrorMessage('')
-    setSuccessMessage('')
     setIsDeletingId(productId)
 
     try {
@@ -269,17 +271,15 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
       if (editingProductId === productId) {
         resetProductForm()
       }
-      setSuccessMessage('Product deleted successfully.')
+      showAdminAlert('success', 'Product deleted', 'Product deleted successfully.')
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to delete product.')
+      showAdminAlert('error', 'Product could not be deleted', error instanceof Error ? error.message : 'Unable to delete product.')
     } finally {
       setIsDeletingId('')
     }
   }
 
   async function handleOrderStatusSave(orderId) {
-    setErrorMessage('')
-    setSuccessMessage('')
     setUpdatingOrderId(orderId)
 
     try {
@@ -299,9 +299,9 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
       setOrders((currentOrders) =>
         currentOrders.map((order) => (order.id === orderId ? { ...order, ...data.order } : order))
       )
-      setSuccessMessage(`Order ${data.order.reference} updated successfully.`)
+      showAdminAlert('success', 'Order updated', `Order ${data.order.reference} updated successfully.`)
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to update order status.')
+      showAdminAlert('error', 'Order could not be updated', error instanceof Error ? error.message : 'Unable to update order status.')
     } finally {
       setUpdatingOrderId('')
     }
@@ -309,6 +309,13 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,#fff4d6_0%,#f5efe4_45%,#efe7da_100%)] px-6 py-10">
+      <AlertModal
+        isOpen={Boolean(adminAlert)}
+        message={adminAlert?.message || ''}
+        onClose={() => setAdminAlert(null)}
+        title={adminAlert?.title || ''}
+        variant={adminAlert?.variant || 'info'}
+      />
       {!adminToken ? (
         <div className="mx-auto max-w-2xl rounded-[2rem] border border-stone-200/80 bg-white/95 p-10 shadow-[0_30px_90px_rgba(0,0,0,0.08)] backdrop-blur">
             <p className="text-xs font-semibold uppercase tracking-[0.35em] text-amber-700">Admin Login</p>
@@ -341,8 +348,6 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
                 className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-amber-500"
               />
             </label>
-
-            {errorMessage ? <p className="text-sm text-rose-600">{errorMessage}</p> : null}
 
             <div className="flex flex-wrap gap-3 pt-2">
               <button
@@ -385,10 +390,7 @@ export default function AdminPage({ openPage, products, onProductsRefresh }) {
               </div>
             </div>
 
-            <div className="px-8 py-6">
-              {successMessage ? <p className="text-sm text-emerald-700">{successMessage}</p> : null}
-              {errorMessage ? <p className="text-sm text-rose-600">{errorMessage}</p> : null}
-            </div>
+            <div className="px-8 py-6" />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
